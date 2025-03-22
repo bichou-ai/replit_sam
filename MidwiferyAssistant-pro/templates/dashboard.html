@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord | ANIPS-F{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4">Bienvenue, {{ current_user.username }}</h1>
+        <p class="lead">Votre assistant obstétrical toujours à portée de main.</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="dashboard-stats mb-4">
+    <div class="stat-card">
+        <i class="fas fa-female fa-2x text-primary mb-3"></i>
+        <div class="stat-value">{{ patient_count }}</div>
+        <div class="stat-label">Patientes</div>
+    </div>
+    
+    <div class="stat-card">
+        <i class="fas fa-calendar-check fa-2x text-success mb-3"></i>
+        <div class="stat-value">{{ recent_bp|length }}</div>
+        <div class="stat-label">Mesures récentes</div>
+    </div>
+    
+    <div class="stat-card">
+        <i class="fas fa-calculator fa-2x text-info mb-3"></i>
+        <div class="stat-value">{{ current_user.default_cycle_length }}</div>
+        <div class="stat-label">Cycle par défaut</div>
+    </div>
+    
+    <div class="stat-card">
+        <i class="fas fa-book-medical fa-2x text-warning mb-3"></i>
+        <div class="stat-value">4</div>
+        <div class="stat-label">Protocoles d'urgence</div>
+    </div>
+</div>
+
+<!-- Quick Access Tools -->
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-tools text-primary"></i> Accès rapide</h2>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('calculator') }}" class="action-card text-decoration-none">
+                <div class="action-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <h3 class="action-title">Calculateur gestationnel</h3>
+                <p class="action-description">Calcul de l'âge gestationnel et du terme</p>
+            </a>
+            
+            <a href="{{ url_for('blood_pressure') }}" class="action-card text-decoration-none">
+                <div class="action-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <h3 class="action-title">Suivi tensionnel</h3>
+                <p class="action-description">Surveillance et analyse de la tension artérielle</p>
+            </a>
+            
+            <a href="{{ url_for('biomedical') }}" class="action-card text-decoration-none">
+                <div class="action-icon">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <h3 class="action-title">Analyse biomédicale</h3>
+                <p class="action-description">Interprétation des résultats de laboratoire</p>
+            </a>
+            
+            <a href="{{ url_for('emergency') }}" class="action-card text-decoration-none">
+                <div class="action-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 class="action-title">Protocoles d'urgence</h3>
+                <p class="action-description">Accès rapide aux conduites à tenir</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-7">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-heartbeat text-danger"></i> Mesures récentes de tension artérielle</h3>
+            </div>
+            <div class="card-body">
+                {% if recent_bp %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patiente</th>
+                                <th>TA</th>
+                                <th>FC</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bp in recent_bp %}
+                            <tr>
+                                <td>{{ bp.recorded_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ bp.patient.first_name }} {{ bp.patient.last_name }}</td>
+                                <td>{{ bp.systolic }}/{{ bp.diastolic }}</td>
+                                <td>{{ bp.heart_rate or '-' }}</td>
+                                <td>
+                                    {% if bp.systolic >= 160 or bp.diastolic >= 110 %}
+                                    <span class="badge badge-danger">Critique</span>
+                                    {% elif bp.systolic >= 140 or bp.diastolic >= 90 %}
+                                    <span class="badge badge-warning">Élevée</span>
+                                    {% else %}
+                                    <span class="badge badge-success">Normale</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">Aucune mesure récente</p>
+                {% endif %}
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('blood_pressure') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-plus"></i> Nouvelle mesure
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-calendar-alt text-info"></i> Ressources utiles</h3>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <a href="{{ url_for('checklists') }}" class="text-decoration-none">
+                            <i class="fas fa-tasks text-primary"></i> Checklists adaptatives par terme
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="{{ url_for('ultrasound') }}" class="text-decoration-none">
+                            <i class="fas fa-ultrasound text-primary"></i> Référentiel échographique
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="{{ url_for('patients') }}" class="text-decoration-none">
+                            <i class="fas fa-female text-primary"></i> Gestion des patientes
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-info-circle text-warning"></i> À savoir</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-lock"></i> Données sécurisées</h5>
+                    <p class="mb-0">Toutes vos données sont stockées localement et sécurisées.</p>
+                </div>
+                
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-wifi-slash"></i> Mode hors ligne</h5>
+                    <p class="mb-0">ANIPS-F fonctionne sans connexion Internet.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Assistant IA -->
+        <div id="dashboard-ai-assistant"></div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser l'assistant IA sur le tableau de bord
+        initializeAIAssistant('#dashboard-ai-assistant');
+    });
+</script>
+{% endblock scripts %}

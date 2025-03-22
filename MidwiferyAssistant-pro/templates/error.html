@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}{{ error }} | ANIPS-F{% endblock %}
+
+{% block content %}
+<div class="text-center mt-5">
+    <div class="mb-4">
+        <span class="display-1 text-danger">
+            {% if code == 404 %}
+            <i class="fas fa-map-signs"></i>
+            {% elif code == 500 %}
+            <i class="fas fa-bug"></i>
+            {% else %}
+            <i class="fas fa-exclamation-circle"></i>
+            {% endif %}
+        </span>
+    </div>
+    
+    <h1 class="display-4">{{ error }}</h1>
+    
+    <p class="lead">{{ message }}</p>
+    
+    <p class="text-muted mt-4">Code d'erreur: {{ code }}</p>
+    
+    <div class="mt-5">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-home"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h3 class="card-title h5 mb-0"><i class="fas fa-question-circle"></i> Besoin d'aide ?</h3>
+            </div>
+            <div class="card-body">
+                <p>Si le problème persiste, essayez les solutions suivantes :</p>
+                
+                <ol>
+                    <li>Vérifiez votre connexion internet (pour les ressources externes)</li>
+                    <li>Actualisez la page (F5 ou Ctrl+R)</li>
+                    <li>Videz le cache de votre navigateur</li>
+                    <li>Si le problème persiste, contactez le support technique</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Analyse biomédicale | ANIPS-F{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3"><i class="fas fa-flask text-primary"></i> Analyse biomédicale</h1>
+        <p class="lead">Interprétation avancée des analyses sanguines et autres examens biologiques.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-vial"></i> Saisie des résultats</h2>
+            </div>
+            <div class="card-body">
+                <form id="biomedical-form">
+                    <!-- Patient selection (if any) -->
+                    {% if patients %}
+                    <div class="form-group">
+                        <label for="patientSelect">Patiente (optionnel)</label>
+                        <select class="form-control" id="patientSelect" name="patientId">
+                            <option value="">-- Sélectionner une patiente --</option>
+                            {% for patient in patients %}
+                            <option value="{{ patient.id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <label for="hemoglobin">Hémoglobine (g/dL)</label>
+                        <input type="number" class="form-control" id="hemoglobin" name="hemoglobin" step="0.1" placeholder="Ex: 12.5">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="platelets">Plaquettes (10^9/L)</label>
+                        <input type="number" class="form-control" id="platelets" name="platelets" step="1" placeholder="Ex: 250">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ferritin">Ferritine (μg/L) <span class="text-muted">(optionnel)</span></label>
+                        <input type="number" class="form-control" id="ferritin" name="ferritin" step="0.1" placeholder="Ex: 30">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hematocrit">Hématocrite (%) <span class="text-muted">(optionnel)</span></label>
+                        <input type="number" class="form-control" id="hematocrit" name="hematocrit" step="0.1" placeholder="Ex: 38">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ldh">LDH (U/L) <span class="text-muted">(optionnel)</span></label>
+                        <input type="number" class="form-control" id="ldh" name="ldh" step="1" placeholder="Ex: 200">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="alt">ALT/SGPT (U/L) <span class="text-muted">(optionnel)</span></label>
+                        <input type="number" class="form-control" id="alt" name="alt" step="1" placeholder="Ex: 25">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ast">AST/SGOT (U/L) <span class="text-muted">(optionnel)</span></label>
+                        <input type="number" class="form-control" id="ast" name="ast" step="1" placeholder="Ex: 30">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+                    
+                    {% if patients %}
+                    <div class="form-group form-check" id="save-results-option" style="display: none;">
+                        <input type="checkbox" class="form-check-input" id="save-results" name="save-results" checked>
+                        <label class="form-check-label" for="save-results">Enregistrer pour cette patiente</label>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-microscope"></i> Analyser
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <div id="analysis-results">
+            <div class="alert alert-primary text-center">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <p class="mb-0">Complétez le formulaire avec les valeurs à analyser, puis cliquez sur "Analyser" pour obtenir une interprétation clinique.</p>
+            </div>
+            
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> <strong>Important :</strong> Cette analyse est un outil d'aide à la décision et ne remplace pas le jugement clinique professionnel.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-info-circle"></i> Valeurs de référence</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Valeurs normales pendant la grossesse</h5>
+                        <ul>
+                            <li><strong>Hémoglobine :</strong> 11-13 g/dL</li>
+                            <li><strong>Plaquettes :</strong> 150-400 × 10^9/L</li>
+                            <li><strong>Ferritine :</strong> > 30 μg/L</li>
+                            <li><strong>Hématocrite :</strong> 33-38 %</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Seuils d'alerte</h5>
+                        <ul>
+                            <li><strong>Anémie :</strong> Hb < 11 g/dL</li>
+                            <li><strong>Anémie sévère :</strong> Hb < 8 g/dL</li>
+                            <li><strong>Thrombopénie :</strong> Plt < 150 × 10^9/L</li>
+                            <li><strong>Thrombopénie sévère :</strong> Plt < 50 × 10^9/L</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/biomedical.js') }}"></script>
+{% endblock %}

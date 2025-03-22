@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Calculateur gestationnel | ANIPS-F{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3"><i class="fas fa-calculator text-primary"></i> Calculateur gestationnel</h1>
+        <p class="lead">Calculez précisément l'âge gestationnel et la date d'accouchement prévue.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-calendar-alt"></i> Données de calcul</h2>
+            </div>
+            <div class="card-body">
+                <form id="calculator-form">
+                    <div class="form-group">
+                        <label for="lastPeriod">Date des dernières règles</label>
+                        <input type="date" class="form-control" id="lastPeriod" name="lastPeriod" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cycleLength">Longueur du cycle (jours)</label>
+                        <input type="number" class="form-control" id="cycleLength" name="cycleLength" 
+                               min="20" max="45" placeholder="28"
+                               data-default="{{ current_user.default_cycle_length }}"
+                               value="{{ current_user.default_cycle_length }}">
+                        <small class="form-text text-muted">Un cycle normal dure entre 21 et 35 jours.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="button" id="calculateButton" class="btn btn-primary btn-block">
+                            <i class="fas fa-calculator"></i> Calculer
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i> Ce calculateur utilise la date des dernières règles et ajuste en fonction de la longueur du cycle.
+                </div>
+                
+                <div class="mt-4">
+                    <h5>Calendrier obstétrical</h5>
+                    <p>Le calcul de l'âge gestationnel suit les conventions suivantes :</p>
+                    <ul>
+                        <li>T1 : jusqu'à 14 SA</li>
+                        <li>T2 : de 14 à 28 SA</li>
+                        <li>T3 : à partir de 28 SA</li>
+                        <li>Terme : 41 SA</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <div id="resultContainer">
+            <div class="alert alert-primary text-center">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <p class="mb-0">Complétez le formulaire et cliquez sur "Calculer" pour obtenir l'âge gestationnel et les recommandations.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/calculator.js') }}"></script>
+{% endblock %}

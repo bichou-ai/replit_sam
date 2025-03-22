@@ -1,0 +1,1289 @@
+{% extends "base.html" %}
+
+{% block title %}Suivi Postnatal | ANIPS-F{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12 col-md-3 postnatal-sidebar">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Navigation</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="nav nav-pills flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="pill" href="#deliveries">
+                                <i class="fas fa-baby-carriage me-2"></i>Accouchements
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#mothers">
+                                <i class="fas fa-female me-2"></i>Suivi Mère
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#babies">
+                                <i class="fas fa-baby me-2"></i>Suivi Bébé
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#breastfeeding">
+                                <i class="fas fa-drumstick-bite me-2"></i>Allaitement
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#vaccinations">
+                                <i class="fas fa-syringe me-2"></i>Vaccinations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#reminders">
+                                <i class="fas fa-bell me-2"></i>Rappels & Suivi
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#protocols">
+                                <i class="fas fa-procedures me-2"></i>Protocoles
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Rappels à venir</h5>
+                </div>
+                <div class="card-body">
+                    <div id="upcoming-reminders">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        Chargement des rappels...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-9">
+            <div class="tab-content">
+                <!-- Section Accouchements -->
+                <div class="tab-pane fade show active" id="deliveries">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Registre des Accouchements</h5>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDeliveryModal">
+                                <i class="fas fa-plus me-1"></i> Nouvel accouchement
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="deliveries-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Patiente</th>
+                                            <th>Type</th>
+                                            <th>Lieu</th>
+                                            <th>Complications</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Les données seront chargées dynamiquement -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Suivi Mère -->
+                <div class="tab-pane fade" id="mothers">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Suivi Post-Partum des Mères</h5>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMotherCheckupModal">
+                                <i class="fas fa-plus me-1"></i> Nouvel examen
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <select class="form-select" id="mother-select">
+                                        <option value="">Sélectionnez une patiente...</option>
+                                        <!-- Options seront chargées dynamiquement -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="mother-checkup-history">
+                                <div class="alert alert-info">
+                                    Veuillez sélectionner une patiente pour voir son historique de suivi.
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">Signes Vitaux</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="mother-vitals-chart" height="250"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">Symptômes & Récupération</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="mother-recovery-progress">
+                                                <p class="text-muted">Sélectionnez une patiente pour voir son progrès de récupération.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Suivi Bébé -->
+                <div class="tab-pane fade" id="babies">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Suivi des Nouveau-nés</h5>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addBabyCheckupModal">
+                                <i class="fas fa-plus me-1"></i> Nouvel examen
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <select class="form-select" id="baby-select">
+                                        <option value="">Sélectionnez un bébé...</option>
+                                        <!-- Options seront chargées dynamiquement -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="baby-info">
+                                <div class="alert alert-info">
+                                    Veuillez sélectionner un bébé pour voir ses informations.
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">Croissance</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="baby-growth-chart" height="250"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">Signes Vitaux</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="baby-vitals-chart" height="250"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Allaitement -->
+                <div class="tab-pane fade" id="breastfeeding">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Suivi d'Allaitement</h5>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addBreastfeedingRecordModal">
+                                <i class="fas fa-plus me-1"></i> Nouveau record
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <select class="form-select" id="breastfeeding-baby-select">
+                                        <option value="">Sélectionnez un bébé...</option>
+                                        <!-- Options seront chargées dynamiquement -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="breastfeeding-history">
+                                <div class="alert alert-info">
+                                    Veuillez sélectionner un bébé pour voir son historique d'allaitement.
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">Tendances d'Allaitement</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="breastfeeding-chart" height="250"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">Guide d'Allaitement</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="accordion" id="breastfeedingGuideAccordion">
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header">
+                                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#bf-guide-one">
+                                                            Positions d'allaitement
+                                                        </button>
+                                                    </h2>
+                                                    <div id="bf-guide-one" class="accordion-collapse collapse show" data-bs-parent="#breastfeedingGuideAccordion">
+                                                        <div class="accordion-body">
+                                                            <p>Les différentes positions pour allaiter comprennent :</p>
+                                                            <ul>
+                                                                <li><strong>La position de la madone</strong> - Assise, le bébé sur le bras du même côté.</li>
+                                                                <li><strong>La position de la madone inversée</strong> - Assise, le bébé soutenu par le bras opposé.</li>
+                                                                <li><strong>La position en ballon de rugby</strong> - Bébé sous le bras.</li>
+                                                                <li><strong>La position allongée</strong> - Mère et bébé couchés face à face.</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header">
+                                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#bf-guide-two">
+                                                            Problèmes courants
+                                                        </button>
+                                                    </h2>
+                                                    <div id="bf-guide-two" class="accordion-collapse collapse" data-bs-parent="#breastfeedingGuideAccordion">
+                                                        <div class="accordion-body">
+                                                            <ul>
+                                                                <li><strong>Mamelons douloureux</strong> - Vérifier la prise du sein et la position.</li>
+                                                                <li><strong>Engorgement</strong> - Allaitements fréquents, compresses froides.</li>
+                                                                <li><strong>Canaux bouchés</strong> - Massage doux, chaleur, allaitement fréquent.</li>
+                                                                <li><strong>Mastite</strong> - Consulter un médecin, continuer l'allaitement.</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header">
+                                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#bf-guide-three">
+                                                            Signes de bonne alimentation
+                                                        </button>
+                                                    </h2>
+                                                    <div id="bf-guide-three" class="accordion-collapse collapse" data-bs-parent="#breastfeedingGuideAccordion">
+                                                        <div class="accordion-body">
+                                                            <p>Votre bébé est bien alimenté si :</p>
+                                                            <ul>
+                                                                <li>Il a 6-8 couches mouillées par jour</li>
+                                                                <li>Ses selles sont jaunes et molles</li>
+                                                                <li>Il prend du poids régulièrement</li>
+                                                                <li>Il semble satisfait après les tétées</li>
+                                                                <li>Vous entendez des déglutitions pendant la tétée</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Vaccinations -->
+                <div class="tab-pane fade" id="vaccinations">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Suivi des Vaccinations</h5>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addVaccinationModal">
+                                <i class="fas fa-plus me-1"></i> Nouvelle vaccination
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <select class="form-select" id="vaccination-baby-select">
+                                        <option value="">Sélectionnez un bébé...</option>
+                                        <!-- Options seront chargées dynamiquement -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="vaccination-history">
+                                <div class="alert alert-info">
+                                    Veuillez sélectionner un bébé pour voir son historique de vaccination.
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">Calendrier Vaccinal Recommandé</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Âge</th>
+                                                            <th>Vaccins</th>
+                                                            <th>Notes</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Naissance</td>
+                                                            <td>BCG, VPO, Vitamine K</td>
+                                                            <td>Administrés généralement à la maternité</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>6 semaines</td>
+                                                            <td>DTCoq, VPO, Hib, PCV, Rotavirus</td>
+                                                            <td>Première série de vaccinations infantiles</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>10 semaines</td>
+                                                            <td>DTCoq, VPO, Hib, PCV, Rotavirus</td>
+                                                            <td>Deuxième dose</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>14 semaines</td>
+                                                            <td>DTCoq, VPO, Hib, PCV, Rotavirus</td>
+                                                            <td>Troisième dose</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>9 mois</td>
+                                                            <td>Rougeole, Fièvre jaune</td>
+                                                            <td>Selon région</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Rappels & Suivi -->
+                <div class="tab-pane fade" id="reminders">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Gestion des Rappels de Soins</h5>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addReminderModal">
+                                <i class="fas fa-plus me-1"></i> Nouveau rappel
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <select class="form-select" id="reminder-type-filter">
+                                        <option value="all">Tous les types</option>
+                                        <option value="mother">Mère</option>
+                                        <option value="baby">Bébé</option>
+                                        <option value="both">Les deux</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="reminder-priority-filter">
+                                        <option value="all">Toutes priorités</option>
+                                        <option value="high">Haute</option>
+                                        <option value="normal">Normale</option>
+                                        <option value="low">Basse</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="reminder-status-filter">
+                                        <option value="all">Tout statut</option>
+                                        <option value="pending">À venir</option>
+                                        <option value="completed">Complétés</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-secondary w-100" id="reset-reminder-filters">
+                                        <i class="fas fa-sync-alt me-1"></i> Réinitialiser
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="reminders-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Titre</th>
+                                            <th>Type</th>
+                                            <th>Patient/Bébé</th>
+                                            <th>Priorité</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Les données seront chargées dynamiquement -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Protocoles -->
+                <div class="tab-pane fade" id="protocols">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Protocoles de Réanimation et Soins d'Urgence</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <input type="text" class="form-control" id="protocol-search" placeholder="Rechercher un protocole...">
+                                </div>
+                            </div>
+                            
+                            <div class="accordion" id="resuscitationProtocolsAccordion">
+                                <!-- Réanimation néonatale -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#neonatal-resuscitation-collapse">
+                                            <i class="fas fa-heartbeat text-danger me-2"></i> Réanimation Néonatale
+                                        </button>
+                                    </h2>
+                                    <div id="neonatal-resuscitation-collapse" class="accordion-collapse collapse show" data-bs-parent="#resuscitationProtocolsAccordion">
+                                        <div class="accordion-body">
+                                            <div class="protocol-steps">
+                                                <h5>Algorithme de Réanimation Néonatale</h5>
+                                                <div class="alert alert-warning mb-3">
+                                                    <strong>Temps critique :</strong> Les premières 60 secondes ("Golden Minute") sont cruciales.
+                                                </div>
+                                                
+                                                <ol class="list-group list-group-numbered mb-3">
+                                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                                        <div class="ms-2 me-auto">
+                                                            <div class="fw-bold">Évaluation initiale rapide</div>
+                                                            Sécher et stimuler, repositionner, dégager les voies aériennes si nécessaire
+                                                        </div>
+                                                        <span class="badge bg-primary rounded-pill">0-30s</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                                        <div class="ms-2 me-auto">
+                                                            <div class="fw-bold">Ventilation</div>
+                                                            Si absence de respiration ou gasping, commencer ventilation au masque et ballon
+                                                        </div>
+                                                        <span class="badge bg-primary rounded-pill">30-60s</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                                        <div class="ms-2 me-auto">
+                                                            <div class="fw-bold">Compressions thoraciques</div>
+                                                            Si FC < 60 bpm malgré 30s de ventilation efficace
+                                                        </div>
+                                                        <span class="badge bg-danger rounded-pill">60-90s</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                                        <div class="ms-2 me-auto">
+                                                            <div class="fw-bold">Médicaments</div>
+                                                            Adrénaline si FC reste < 60 bpm malgré compressions et ventilation
+                                                        </div>
+                                                        <span class="badge bg-danger rounded-pill">3-5min</span>
+                                                    </li>
+                                                </ol>
+                                                
+                                                <h6>Technique de Compressions Thoraciques</h6>
+                                                <ul>
+                                                    <li>Placer les pouces sur le sternum (tiers inférieur), juste en dessous de la ligne intermamillaire</li>
+                                                    <li>Entourer le thorax avec les autres doigts pour soutenir le dos</li>
+                                                    <li>Compresser le sternum d'environ 1/3 du diamètre antéro-postérieur</li>
+                                                    <li>Fréquence : 90 compressions/min et 30 ventilations/min (ratio 3:1)</li>
+                                                </ul>
+                                                
+                                                <h6>Administration d'Oxygène</h6>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Âge Gestationnel</th>
+                                                                <th>Concentration O₂ Initiale</th>
+                                                                <th>Ajustement</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>≥ 35 semaines</td>
+                                                                <td>21% (air ambiant)</td>
+                                                                <td>Augmenter si cyanose persiste malgré ventilation efficace</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>< 35 semaines</td>
+                                                                <td>21-30%</td>
+                                                                <td>Ajuster selon SpO₂ préductale</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Hémorragie Post-Partum -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#postpartum-hemorrhage-collapse">
+                                            <i class="fas fa-tint text-danger me-2"></i> Hémorragie Post-Partum
+                                        </button>
+                                    </h2>
+                                    <div id="postpartum-hemorrhage-collapse" class="accordion-collapse collapse" data-bs-parent="#resuscitationProtocolsAccordion">
+                                        <div class="accordion-body">
+                                            <div class="protocol-steps">
+                                                <h5>Gestion de l'Hémorragie Post-Partum (HPP)</h5>
+                                                <div class="alert alert-danger mb-3">
+                                                    <strong>Urgence obstétricale :</strong> L'HPP est définie comme une perte sanguine > 500ml après accouchement vaginal ou > 1000ml après césarienne.
+                                                </div>
+                                                
+                                                <h6>Causes (4T)</h6>
+                                                <ul>
+                                                    <li><strong>Tonus</strong> - Atonie utérine (70% des cas)</li>
+                                                    <li><strong>Tissu</strong> - Rétention placentaire</li>
+                                                    <li><strong>Traumatisme</strong> - Lacérations vaginales/cervicales</li>
+                                                    <li><strong>Thrombine</strong> - Troubles de la coagulation</li>
+                                                </ul>
+                                                
+                                                <h6>Intervention immédiate</h6>
+                                                <ol>
+                                                    <li>Appeler à l'aide</li>
+                                                    <li>Massage utérin ferme et continu</li>
+                                                    <li>Administrer ocytocine 10 UI en IM ou 20-40 UI dans 1L de solution IV</li>
+                                                    <li>Vérifier placenta et membranes complets</li>
+                                                    <li>Examiner lacérations et réparer si nécessaire</li>
+                                                    <li>Vidange vésicale</li>
+                                                    <li>Compression bimanuelle de l'utérus si le saignement persiste</li>
+                                                </ol>
+                                                
+                                                <h6>Médicaments utérotoniques</h6>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Médicament</th>
+                                                                <th>Dosage</th>
+                                                                <th>Voie</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Ocytocine</td>
+                                                                <td>10 UI puis 20-40 UI</td>
+                                                                <td>IM puis IV (perfusion)</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Misoprostol</td>
+                                                                <td>800-1000 μg</td>
+                                                                <td>Rectal</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Acide tranexamique</td>
+                                                                <td>1g (10mg/kg)</td>
+                                                                <td>IV lent (sur 10 min)</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Éclampsie -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#eclampsia-collapse">
+                                            <i class="fas fa-bolt text-warning me-2"></i> Éclampsie
+                                        </button>
+                                    </h2>
+                                    <div id="eclampsia-collapse" class="accordion-collapse collapse" data-bs-parent="#resuscitationProtocolsAccordion">
+                                        <div class="accordion-body">
+                                            <div class="protocol-steps">
+                                                <h5>Prise en Charge de la Crise d'Éclampsie</h5>
+                                                <div class="alert alert-warning mb-3">
+                                                    <strong>Urgence critique :</strong> Convulsions survenant dans un contexte de pré-éclampsie.
+                                                </div>
+                                                
+                                                <h6>Actions immédiates</h6>
+                                                <ol>
+                                                    <li>Assurer et maintenir la perméabilité des voies aériennes</li>
+                                                    <li>Placer la patiente en position latérale gauche</li>
+                                                    <li>Administrer de l'oxygène à haut débit</li>
+                                                    <li>Protéger la patiente contre les blessures</li>
+                                                    <li>Appeler à l'aide et préparer le transfert si nécessaire</li>
+                                                </ol>
+                                                
+                                                <h6>Traitement médicamenteux</h6>
+                                                <ul>
+                                                    <li><strong>Sulfate de magnésium</strong> - Dose de charge: 4-6g IV sur 15-20 min, puis 1-2g/h en perfusion continue pendant 24h</li>
+                                                    <li><strong>Contrôle de l'hypertension</strong> - Labetalol, Hydralazine ou Nicardipine si TA syst >160 ou TA diast >110 mmHg</li>
+                                                </ul>
+                                                
+                                                <div class="alert alert-info">
+                                                    <strong>Surveillance du Mg²⁺ :</strong> Fréquence respiratoire, réflexes ostéotendineux, diurèse. Antidote: Gluconate de calcium 1g IV lent.
+                                                </div>
+                                                
+                                                <h6>Plan d'accouchement</h6>
+                                                <p>Après stabilisation, évaluer pour accouchement en fonction de l'état maternel et fœtal, de l'âge gestationnel et des conditions obstétricales.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales -->
+<!-- Modal Ajout Accouchement -->
+<div class="modal fade" id="addDeliveryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Enregistrer un Nouvel Accouchement</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-delivery-form">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="delivery-patient" class="form-label">Patiente</label>
+                            <select class="form-select" id="delivery-patient" name="patient_id" required>
+                                <option value="">Sélectionnez une patiente...</option>
+                                <!-- Options chargées dynamiquement -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="delivery-date" class="form-label">Date et heure d'accouchement</label>
+                            <input type="datetime-local" class="form-control" id="delivery-date" name="delivery_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="delivery-type" class="form-label">Type d'accouchement</label>
+                            <select class="form-select" id="delivery-type" name="delivery_type" required>
+                                <option value="">Sélectionnez le type...</option>
+                                <option value="vaginal">Vaginal spontané</option>
+                                <option value="instrumental">Instrumental (ventouse/forceps)</option>
+                                <option value="cesarean_planned">Césarienne programmée</option>
+                                <option value="cesarean_emergency">Césarienne en urgence</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="delivery-location" class="form-label">Lieu d'accouchement</label>
+                            <input type="text" class="form-control" id="delivery-location" name="delivery_location" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="delivery-duration" class="form-label">Durée du travail (minutes)</label>
+                            <input type="number" class="form-control" id="delivery-duration" name="delivery_duration">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="delivery-complications" class="form-label">Complications</label>
+                            <textarea class="form-control" id="delivery-complications" name="complications" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="delivery-anesthesia" class="form-label">Type d'anesthésie</label>
+                            <select class="form-select" id="delivery-anesthesia" name="anesthesia_type">
+                                <option value="">Sélectionnez si applicable...</option>
+                                <option value="none">Aucune</option>
+                                <option value="epidural">Péridurale</option>
+                                <option value="spinal">Rachianesthésie</option>
+                                <option value="general">Générale</option>
+                                <option value="local">Locale</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="delivery-blood-loss" class="form-label">Pertes sanguines estimées (mL)</label>
+                            <input type="number" class="form-control" id="delivery-blood-loss" name="blood_loss">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="delivery-notes" class="form-label">Notes additionnelles</label>
+                            <textarea class="form-control" id="delivery-notes" name="notes" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-4 mb-3 text-primary">Informations du Bébé</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="baby-first-name" class="form-label">Prénom</label>
+                            <input type="text" class="form-control" id="baby-first-name" name="baby_first_name">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="baby-last-name" class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="baby-last-name" name="baby_last_name">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="baby-gender" class="form-label">Sexe</label>
+                            <select class="form-select" id="baby-gender" name="baby_gender">
+                                <option value="">Sélectionnez...</option>
+                                <option value="F">Féminin</option>
+                                <option value="M">Masculin</option>
+                                <option value="O">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="baby-weight" class="form-label">Poids (g)</label>
+                            <input type="number" class="form-control" id="baby-weight" name="birth_weight" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="baby-length" class="form-label">Taille (cm)</label>
+                            <input type="number" step="0.1" class="form-control" id="baby-length" name="birth_length">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="baby-head-circumference" class="form-label">Périmètre crânien (cm)</label>
+                            <input type="number" step="0.1" class="form-control" id="baby-head-circumference" name="head_circumference">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="baby-apgar-1" class="form-label">Apgar 1 min</label>
+                            <input type="number" min="0" max="10" class="form-control" id="baby-apgar-1" name="apgar_1min">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="baby-apgar-5" class="form-label">Apgar 5 min</label>
+                            <input type="number" min="0" max="10" class="form-control" id="baby-apgar-5" name="apgar_5min">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="baby-apgar-10" class="form-label">Apgar 10 min</label>
+                            <input type="number" min="0" max="10" class="form-control" id="baby-apgar-10" name="apgar_10min">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="baby-resuscitation" name="resuscitation_required">
+                                <label class="form-check-label" for="baby-resuscitation">
+                                    Réanimation nécessaire
+                                </label>
+                            </div>
+                            <div id="resuscitation-details-container" class="mt-2 d-none">
+                                <label for="baby-resuscitation-details" class="form-label">Détails de la réanimation</label>
+                                <textarea class="form-control" id="baby-resuscitation-details" name="resuscitation_details" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="baby-oxygen" name="oxygen_required">
+                                <label class="form-check-label" for="baby-oxygen">
+                                    Oxygène nécessaire
+                                </label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="baby-nicu" name="nicu_required">
+                                <label class="form-check-label" for="baby-nicu">
+                                    Admission en néonatologie/soins intensifs
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="baby-anomalies" class="form-label">Anomalies congénitales ou remarques</label>
+                        <textarea class="form-control" id="baby-anomalies" name="congenital_anomalies" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="save-delivery-btn">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Examen Mère -->
+<div class="modal fade" id="addMotherCheckupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Nouvel Examen Post-Partum (Mère)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-mother-checkup-form">
+                    <input type="hidden" name="checkup_type" value="mother">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="mother-checkup-patient" class="form-label">Patiente</label>
+                            <select class="form-select" id="mother-checkup-patient" name="patient_id" required>
+                                <option value="">Sélectionnez une patiente...</option>
+                                <!-- Options chargées dynamiquement -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="mother-checkup-date" class="form-label">Date et heure de l'examen</label>
+                            <input type="datetime-local" class="form-control" id="mother-checkup-date" name="checkup_date" required>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-3 mb-3 text-primary">Signes Vitaux</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="mother-checkup-temperature" class="form-label">Température (°C)</label>
+                            <input type="number" step="0.1" class="form-control" id="mother-checkup-temperature" name="temperature">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="mother-checkup-heart-rate" class="form-label">Fréquence cardiaque</label>
+                            <input type="number" class="form-control" id="mother-checkup-heart-rate" name="heart_rate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="mother-checkup-bp-systolic" class="form-label">TA Systolique</label>
+                            <input type="number" class="form-control" id="mother-checkup-bp-systolic" name="blood_pressure_systolic">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="mother-checkup-bp-diastolic" class="form-label">TA Diastolique</label>
+                            <input type="number" class="form-control" id="mother-checkup-bp-diastolic" name="blood_pressure_diastolic">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="mother-checkup-weight" class="form-label">Poids (kg)</label>
+                            <input type="number" step="0.1" class="form-control" id="mother-checkup-weight" name="weight">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="mother-checkup-respiratory-rate" class="form-label">Fréquence respiratoire</label>
+                            <input type="number" class="form-control" id="mother-checkup-respiratory-rate" name="respiratory_rate">
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-3 mb-3 text-primary">Évaluation Clinique</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="mother-checkup-symptoms" class="form-label">Symptômes</label>
+                            <textarea class="form-control" id="mother-checkup-symptoms" name="symptoms" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="mother-checkup-physical" class="form-label">Examen physique</label>
+                            <textarea class="form-control" id="mother-checkup-physical" name="physical_exam" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="mother-checkup-medications" class="form-label">Médicaments</label>
+                            <textarea class="form-control" id="mother-checkup-medications" name="medications" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="mother-checkup-recommendations" class="form-label">Recommandations</label>
+                            <textarea class="form-control" id="mother-checkup-recommendations" name="recommendations" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="mother-checkup-next-date" class="form-label">Date du prochain examen</label>
+                            <input type="date" class="form-control" id="mother-checkup-next-date" name="next_checkup_date">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="mother-checkup-notes" class="form-label">Notes additionnelles</label>
+                            <textarea class="form-control" id="mother-checkup-notes" name="notes" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="save-mother-checkup-btn">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Examen Bébé -->
+<div class="modal fade" id="addBabyCheckupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Nouvel Examen (Bébé)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-baby-checkup-form">
+                    <input type="hidden" name="checkup_type" value="baby">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="baby-checkup-baby" class="form-label">Bébé</label>
+                            <select class="form-select" id="baby-checkup-baby" name="baby_id" required>
+                                <option value="">Sélectionnez un bébé...</option>
+                                <!-- Options chargées dynamiquement -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="baby-checkup-date" class="form-label">Date et heure de l'examen</label>
+                            <input type="datetime-local" class="form-control" id="baby-checkup-date" name="checkup_date" required>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-3 mb-3 text-primary">Signes Vitaux et Mensurations</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="baby-checkup-temperature" class="form-label">Température (°C)</label>
+                            <input type="number" step="0.1" class="form-control" id="baby-checkup-temperature" name="temperature">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="baby-checkup-heart-rate" class="form-label">Fréquence cardiaque</label>
+                            <input type="number" class="form-control" id="baby-checkup-heart-rate" name="heart_rate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="baby-checkup-respiratory-rate" class="form-label">Fréquence respiratoire</label>
+                            <input type="number" class="form-control" id="baby-checkup-respiratory-rate" name="respiratory_rate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="baby-checkup-weight" class="form-label">Poids (kg)</label>
+                            <input type="number" step="0.01" class="form-control" id="baby-checkup-weight" name="weight">
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-3 mb-3 text-primary">Évaluation Clinique</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="baby-checkup-symptoms" class="form-label">Symptômes / Observations</label>
+                            <textarea class="form-control" id="baby-checkup-symptoms" name="symptoms" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="baby-checkup-physical" class="form-label">Examen physique</label>
+                            <textarea class="form-control" id="baby-checkup-physical" name="physical_exam" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="baby-checkup-medications" class="form-label">Médicaments</label>
+                            <textarea class="form-control" id="baby-checkup-medications" name="medications" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="baby-checkup-recommendations" class="form-label">Recommandations</label>
+                            <textarea class="form-control" id="baby-checkup-recommendations" name="recommendations" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="baby-checkup-next-date" class="form-label">Date du prochain examen</label>
+                            <input type="date" class="form-control" id="baby-checkup-next-date" name="next_checkup_date">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="baby-checkup-notes" class="form-label">Notes additionnelles</label>
+                            <textarea class="form-control" id="baby-checkup-notes" name="notes" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="save-baby-checkup-btn">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Allaitement -->
+<div class="modal fade" id="addBreastfeedingRecordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Nouvel Enregistrement d'Allaitement</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-breastfeeding-form">
+                    <div class="mb-3">
+                        <label for="breastfeeding-baby" class="form-label">Bébé</label>
+                        <select class="form-select" id="breastfeeding-baby" name="baby_id" required>
+                            <option value="">Sélectionnez un bébé...</option>
+                            <!-- Options chargées dynamiquement -->
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="breastfeeding-date" class="form-label">Date et heure</label>
+                        <input type="datetime-local" class="form-control" id="breastfeeding-date" name="feeding_date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="breastfeeding-type" class="form-label">Type d'alimentation</label>
+                        <select class="form-select" id="breastfeeding-type" name="feeding_type" required>
+                            <option value="">Sélectionnez...</option>
+                            <option value="exclusive_breastfeeding">Allaitement exclusif</option>
+                            <option value="mixed">Mixte (sein et biberon)</option>
+                            <option value="formula">Lait artificiel</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="breastfeeding-duration" class="form-label">Durée (minutes)</label>
+                        <input type="number" class="form-control" id="breastfeeding-duration" name="duration">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="breastfeeding-issues" class="form-label">Problèmes rencontrés</label>
+                        <textarea class="form-control" id="breastfeeding-issues" name="issues" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="breastfeeding-notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="breastfeeding-notes" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="save-breastfeeding-btn">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Vaccination -->
+<div class="modal fade" id="addVaccinationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Nouvelle Vaccination</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-vaccination-form">
+                    <div class="mb-3">
+                        <label for="vaccination-baby" class="form-label">Bébé</label>
+                        <select class="form-select" id="vaccination-baby" name="baby_id" required>
+                            <option value="">Sélectionnez un bébé...</option>
+                            <!-- Options chargées dynamiquement -->
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="vaccination-name" class="form-label">Vaccin</label>
+                        <select class="form-select" id="vaccination-name" name="vaccine_name" required>
+                            <option value="">Sélectionnez...</option>
+                            <option value="BCG">BCG</option>
+                            <option value="VPO">VPO (Polio oral)</option>
+                            <option value="Vitamin K">Vitamine K</option>
+                            <option value="DTCoq">DTCoq</option>
+                            <option value="Hib">Hib</option>
+                            <option value="PCV">PCV (Pneumocoque)</option>
+                            <option value="Rotavirus">Rotavirus</option>
+                            <option value="Measles">Rougeole</option>
+                            <option value="Yellow Fever">Fièvre jaune</option>
+                            <option value="Hepatitis B">Hépatite B</option>
+                            <option value="MMR">ROR (Rougeole, Oreillons, Rubéole)</option>
+                            <option value="other">Autre</option>
+                        </select>
+                    </div>
+                    
+                    <div id="other-vaccine-container" class="mb-3 d-none">
+                        <label for="other-vaccine-name" class="form-label">Précisez le vaccin</label>
+                        <input type="text" class="form-control" id="other-vaccine-name">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="vaccination-date" class="form-label">Date d'administration</label>
+                        <input type="datetime-local" class="form-control" id="vaccination-date" name="date_administered" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="vaccination-dose" class="form-label">Dose</label>
+                            <input type="text" class="form-control" id="vaccination-dose" name="dose">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="vaccination-route" class="form-label">Voie d'administration</label>
+                            <select class="form-select" id="vaccination-route" name="route">
+                                <option value="">Sélectionnez...</option>
+                                <option value="IM">IM (Intramusculaire)</option>
+                                <option value="SC">SC (Sous-cutanée)</option>
+                                <option value="ID">ID (Intradermique)</option>
+                                <option value="IV">IV (Intraveineuse)</option>
+                                <option value="Oral">Orale</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="vaccination-site" class="form-label">Site d'injection</label>
+                            <select class="form-select" id="vaccination-site" name="site">
+                                <option value="">Sélectionnez...</option>
+                                <option value="Left arm">Bras gauche</option>
+                                <option value="Right arm">Bras droit</option>
+                                <option value="Left thigh">Cuisse gauche</option>
+                                <option value="Right thigh">Cuisse droite</option>
+                                <option value="Buttock">Fesse</option>
+                                <option value="Oral">Voie orale</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="vaccination-lot" class="form-label">Numéro de lot</label>
+                            <input type="text" class="form-control" id="vaccination-lot" name="lot_number">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="vaccination-expiry" class="form-label">Date d'expiration</label>
+                            <input type="date" class="form-control" id="vaccination-expiry" name="expiration_date">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="vaccination-reaction" class="form-label">Réaction</label>
+                            <input type="text" class="form-control" id="vaccination-reaction" name="reaction">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="vaccination-notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="vaccination-notes" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="save-vaccination-btn">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Rappel -->
+<div class="modal fade" id="addReminderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Nouveau Rappel de Soins</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-reminder-form">
+                    <div class="mb-3">
+                        <label for="reminder-type" class="form-label">Type de rappel</label>
+                        <select class="form-select" id="reminder-type" name="reminder_type" required>
+                            <option value="">Sélectionnez...</option>
+                            <option value="mother">Mère</option>
+                            <option value="baby">Bébé</option>
+                            <option value="both">Les deux</option>
+                        </select>
+                    </div>
+                    
+                    <div id="reminder-patient-container" class="mb-3 d-none">
+                        <label for="reminder-patient" class="form-label">Patiente</label>
+                        <select class="form-select" id="reminder-patient" name="patient_id">
+                            <option value="">Sélectionnez une patiente...</option>
+                            <!-- Options chargées dynamiquement -->
+                        </select>
+                    </div>
+                    
+                    <div id="reminder-baby-container" class="mb-3 d-none">
+                        <label for="reminder-baby" class="form-label">Bébé</label>
+                        <select class="form-select" id="reminder-baby" name="baby_id">
+                            <option value="">Sélectionnez un bébé...</option>
+                            <!-- Options chargées dynamiquement -->
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reminder-title" class="form-label">Titre</label>
+                        <input type="text" class="form-control" id="reminder-title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reminder-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="reminder-description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="reminder-date" class="form-label">Date du rappel</label>
+                            <input type="date" class="form-control" id="reminder-date" name="reminder_date" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reminder-priority" class="form-label">Priorité</label>
+                            <select class="form-select" id="reminder-priority" name="priority">
+                                <option value="normal">Normale</option>
+                                <option value="high">Haute</option>
+                                <option value="low">Basse</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="save-reminder-btn">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Détails d'Examen -->
+<div class="modal fade" id="checkupDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Détails de l'Examen</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="checkup-details-content">
+                <!-- Contenu chargé dynamiquement -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/chart_utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/postnatal.js') }}"></script>
+{% endblock %}

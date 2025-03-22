@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Référentiel échographique | ANIPS-F{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3"><i class="fas fa-ultrasound text-primary"></i> Référentiel échographique</h1>
+        <p class="lead">Biométrie fœtale et valeurs de référence pour l'interprétation des échographies obstétricales.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-ruler"></i> Mesures biométriques</h2>
+            </div>
+            <div class="card-body">
+                <form id="ultrasound-form">
+                    <!-- Patient selection (if available) -->
+                    {% if patients %}
+                    <div class="form-group">
+                        <label for="patient-id">Patiente (optionnel)</label>
+                        <select class="form-control" id="patient-id" name="patientId">
+                            <option value="">-- Sélectionner une patiente --</option>
+                            {% for patient in patients %}
+                            <option value="{{ patient.id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <label for="gestational-age">Âge gestationnel (SA)</label>
+                        <select class="form-control" id="gestational-age" name="gestationalAge" required>
+                            <option value="">-- Sélectionner --</option>
+                            {% for week in range(12, 41) %}
+                            <option value="{{ week }}">{{ week }} semaines</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bpd">Diamètre bipariétal (BPD) en mm</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="bpd" name="bpd" step="0.1" placeholder="Ex: 85.2">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="bpd-reference"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hc">Périmètre crânien (HC) en mm</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="hc" name="hc" step="0.1" placeholder="Ex: 310.5">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="hc-reference"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ac">Périmètre abdominal (AC) en mm</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="ac" name="ac" step="0.1" placeholder="Ex: 295.8">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="ac-reference"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fl">Longueur fémorale (FL) en mm</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="fl" name="fl" step="0.1" placeholder="Ex: 65.4">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="fl-reference"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="af-index">Index de liquide amniotique (LA) en cm</label>
+                        <input type="number" class="form-control" id="af-index" name="afIndex" step="0.1" placeholder="Ex: 12.5">
+                        <small class="form-text text-muted">Valeurs normales: 5-25 cm</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="placenta-location">Localisation placentaire</label>
+                        <select class="form-control" id="placenta-location" name="placentaLocation">
+                            <option value="">-- Sélectionner --</option>
+                            <option value="antérieur">Antérieur</option>
+                            <option value="postérieur">Postérieur</option>
+                            <option value="latéral droit">Latéral droit</option>
+                            <option value="latéral gauche">Latéral gauche</option>
+                            <option value="fundique">Fundique</option>
+                            <option value="bas-inséré">Bas-inséré</option>
+                            <option value="praevia">Prævia</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes / Observations supplémentaires</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-search"></i> Analyser les mesures
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <div id="ultrasound-results">
+            <div class="alert alert-primary text-center">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <p class="mb-0">Complétez le formulaire avec les mesures échographiques, puis cliquez sur "Analyser" pour obtenir une interprétation.</p>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-chart-line"></i> Courbes de croissance</h2>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="growth-chart" data-measurement="efw"></canvas>
+                </div>
+                
+                <div class="btn-group btn-group-toggle mt-3 w-100" data-toggle="buttons">
+                    <label class="btn btn-outline-primary active">
+                        <input type="radio" name="growth-chart-type" value="efw" checked> Poids estimé
+                    </label>
+                    <label class="btn btn-outline-primary">
+                        <input type="radio" name="growth-chart-type" value="bpd"> BPD
+                    </label>
+                    <label class="btn btn-outline-primary">
+                        <input type="radio" name="growth-chart-type" value="hc"> HC
+                    </label>
+                    <label class="btn btn-outline-primary">
+                        <input type="radio" name="growth-chart-type" value="ac"> AC
+                    </label>
+                    <label class="btn btn-outline-primary">
+                        <input type="radio" name="growth-chart-type" value="fl"> FL
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-info-circle"></i> Normes et références</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Interprétation du liquide amniotique</h5>
+                        <ul>
+                            <li><strong>Oligoamnios :</strong> AFI < 5 cm</li>
+                            <li><strong>Normal :</strong> AFI 5-25 cm</li>
+                            <li><strong>Hydramnios modéré :</strong> AFI 25-32 cm</li>
+                            <li><strong>Hydramnios sévère :</strong> AFI > 32 cm</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Évaluation placentaire</h5>
+                        <ul>
+                            <li><strong>Placenta prævia :</strong> Contrôle à 32 SA recommandé si diagnostiqué avant</li>
+                            <li><strong>Placenta bas-inséré :</strong> < 2 cm de l'OI</li>
+                            <li><strong>Placenta normal :</strong> > 2 cm de l'OI</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="alert alert-warning mt-3">
+                    <p class="mb-0"><i class="fas fa-exclamation-triangle"></i> <strong>Important :</strong> Les mesures biométriques doivent être interprétées en fonction de l'âge gestationnel et des courbes de référence adaptées à la population concernée.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/ultrasound.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des patientes | ANIPS-F{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="mb-3"><i class="fas fa-female text-primary"></i> Gestion des patientes</h1>
+        <p class="lead">Gérez votre liste de patientes et accédez à leurs informations.</p>
+    </div>
+    <div class="col-md-4 text-right">
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addPatientModal">
+            <i class="fas fa-plus"></i> Nouvelle patiente
+        </button>
+    </div>
+</div>
+
+<!-- Patient List -->
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-list"></i> Liste des patientes</h2>
+            </div>
+            <div class="col-md-4">
+                <input type="text" id="patientSearch" class="form-control" placeholder="Rechercher une patiente...">
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if patients %}
+        <div class="table-responsive">
+            <table class="table table-hover" id="patientsTable">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Date de naissance</th>
+                        <th>DDR</th>
+                        <th>Âge gestationnel</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients %}
+                    <tr>
+                        <td>{{ patient.last_name }}</td>
+                        <td>{{ patient.first_name }}</td>
+                        <td>{{ patient.date_of_birth.strftime('%d/%m/%Y') if patient.date_of_birth else 'N/A' }}</td>
+                        <td>{{ patient.last_period_date.strftime('%d/%m/%Y') if patient.last_period_date else 'N/A' }}</td>
+                        <td>
+                            {% if patient.last_period_date %}
+                            <span class="badge badge-info">
+                                {{ ((now - patient.last_period_date).days // 7) }} SA
+                            </span>
+                            {% else %}
+                            <span class="badge badge-secondary">Inconnu</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary view-patient" data-id="{{ patient.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary edit-patient" data-id="{{ patient.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-patient" data-id="{{ patient.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+            <h3 class="h4">Aucune patiente enregistrée</h3>
+            <p class="text-muted">Commencez par ajouter votre première patiente.</p>
+            <button type="button" class="btn btn-primary mt-3" data-toggle="modal" data-target="#addPatientModal">
+                <i class="fas fa-plus"></i> Ajouter une patiente
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="modal fade" id="addPatientModal" tabindex="-1" role="dialog" aria-labelledby="addPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPatientModalLabel"><i class="fas fa-plus-circle"></i> Ajouter une nouvelle patiente</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="POST" action="{{ url_for('patients') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="first_name">Prénom *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="last_name">Nom *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_of_birth">Date de naissance</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="last_period_date">Date des dernières règles</label>
+                                <input type="date" class="form-control" id="last_period_date" name="last_period_date">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cycle_length">Longueur du cycle (jours)</label>
+                                <input type="number" class="form-control" id="cycle_length" name="cycle_length" 
+                                       value="{{ current_user.default_cycle_length }}" min="21" max="45">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes / Antécédents</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Patient Details Modal (placeholder) -->
+<div class="modal fade" id="patientDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-circle"></i> <span id="patient-detail-name"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="loading-spinner"></div>
+                    <p>Chargement des informations...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Patient search functionality
+    const patientSearch = document.getElementById('patientSearch');
+    if (patientSearch) {
+        patientSearch.addEventListener('input', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('patientsTable');
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        });
+    }
+    
+    // View patient details (placeholder functionality)
+    const viewButtons = document.querySelectorAll('.view-patient');
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const patientId = this.getAttribute('data-id');
+            const patientName = this.closest('tr').querySelector('td:nth-child(2)').textContent + ' ' + 
+                              this.closest('tr').querySelector('td:nth-child(1)').textContent;
+            
+            // Update modal with patient name
+            document.getElementById('patient-detail-name').textContent = patientName;
+            
+            // Show the modal
+            $('#patientDetailsModal').modal('show');
+            
+            // In a real implementation, you would fetch patient details via AJAX
+            setTimeout(() => {
+                document.querySelector('#patientDetailsModal .modal-body').innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> La visualisation détaillée des dossiers patients sera disponible dans une prochaine mise à jour.
+                    </div>
+                `;
+            }, 1000);
+        });
+    });
+    
+    // Delete patient confirmation (placeholder functionality)
+    const deleteButtons = document.querySelectorAll('.delete-patient');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const patientId = this.getAttribute('data-id');
+            const patientName = this.closest('tr').querySelector('td:nth-child(2)').textContent + ' ' + 
+                              this.closest('tr').querySelector('td:nth-child(1)').textContent;
+            
+            if (confirm(`Êtes-vous sûr de vouloir supprimer la patiente ${patientName} ? Cette action est irréversible.`)) {
+                // In a real implementation, you would submit a form or make an AJAX request
+                alert('Fonctionnalité de suppression sera disponible dans une mise à jour future.');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

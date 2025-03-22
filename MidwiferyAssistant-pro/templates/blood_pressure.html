@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Suivi tensionnel | ANIPS-F{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3"><i class="fas fa-heartbeat text-primary"></i> Suivi tensionnel</h1>
+        <p class="lead">Surveillance de la tension artérielle et détection de la pré-éclampsie.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-stethoscope"></i> Nouvelle mesure</h2>
+            </div>
+            <div class="card-body">
+                <form id="bp-form">
+                    <!-- Patient selection -->
+                    {% if patients %}
+                    <div class="form-group">
+                        <label for="patientSelect">Patiente (optionnel)</label>
+                        <select class="form-control" id="patientSelect" name="patientId">
+                            <option value="">-- Sélectionner une patiente --</option>
+                            {% for patient in patients %}
+                            <option value="{{ patient.id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Si sélectionné, la mesure sera enregistrée dans le dossier.</small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <label for="systolic">Systolique (mmHg)</label>
+                        <input type="number" class="form-control" id="systolic" name="systolic" min="60" max="250" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="diastolic">Diastolique (mmHg)</label>
+                        <input type="number" class="form-control" id="diastolic" name="diastolic" min="30" max="150" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="heart-rate">Fréquence cardiaque (bpm)</label>
+                        <input type="number" class="form-control" id="heart-rate" name="heartRate" min="40" max="220">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes / Contexte</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-search"></i> Évaluer
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="alert alert-info mt-3">
+                    <p class="mb-0"><i class="fas fa-info-circle"></i> <strong>Rappel :</strong> Mesurer la TA en position assise, après 5 minutes de repos, bras à hauteur du cœur.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-info-circle"></i> Valeurs de référence</h2>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Classification</th>
+                            <th>Systolique</th>
+                            <th>Diastolique</th>
+                            <th>Conduite à tenir</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="table-success">
+                            <td>Normale</td>
+                            <td>&lt; 130</td>
+                            <td>&lt; 80</td>
+                            <td>Surveillance standard</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>Élevée</td>
+                            <td>130-139</td>
+                            <td>80-89</td>
+                            <td>Contrôle dans la semaine</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>HTA légère</td>
+                            <td>140-149</td>
+                            <td>90-99</td>
+                            <td>Contrôle dans les 24h</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>HTA modérée</td>
+                            <td>150-159</td>
+                            <td>100-109</td>
+                            <td>Contrôle rapide</td>
+                        </tr>
+                        <tr class="table-danger">
+                            <td>HTA sévère</td>
+                            <td>≥ 160</td>
+                            <td>≥ 110</td>
+                            <td>Urgence médicale</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <div id="bp-results">
+            <div class="alert alert-primary text-center">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <p class="mb-0">Saisissez les valeurs et cliquez sur "Évaluer" pour analyser la tension artérielle.</p>
+            </div>
+        </div>
+        
+        <!-- BP History Chart (if patient selected) -->
+        {% if patient and bp_history %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-chart-line"></i> Historique tensionnel</h2>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="bp-chart" data-history="{{ bp_history|tojson }}"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+<script src="{{ url_for('static', filename='js/blood_pressure.js') }}"></script>
+{% endblock %}

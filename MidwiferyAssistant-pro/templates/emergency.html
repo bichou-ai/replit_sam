@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Protocoles d'urgence | ANIPS-F{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3"><i class="fas fa-exclamation-triangle text-danger"></i> Protocoles d'urgence</h1>
+        <p class="lead">Conduites à tenir et arbres décisionnels pour les situations d'urgence obstétricale.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-search"></i> Recherche de protocole</h2>
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="protocol-search" placeholder="Rechercher par mot-clé (ex: hémorragie, cordon, hypertension...)">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="alert alert-warning">
+            <p><i class="fas fa-exclamation-circle"></i> <strong>Important :</strong> Ces protocoles sont des guides d'urgence. Ils ne remplacent pas le jugement clinique ni les procédures locales de votre établissement.</p>
+            <p class="mb-0">En cas d'urgence vitale, appelez immédiatement les secours (15, 18 ou 112).</p>
+        </div>
+        
+        <div id="protocols-container">
+            <!-- Les protocoles seront chargés ici via JavaScript -->
+            <div class="text-center">
+                <div class="loading-spinner"></div>
+                <p>Chargement des protocoles d'urgence...</p>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h2 class="card-title h5 mb-0"><i class="fas fa-phone-alt"></i> Numéros d'urgence</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Numéros nationaux</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                SAMU
+                                <span class="badge badge-primary badge-pill">15</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Pompiers
+                                <span class="badge badge-primary badge-pill">18</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Numéro d'urgence européen
+                                <span class="badge badge-primary badge-pill">112</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Numéros personnalisés</h5>
+                        <p class="text-muted"><i class="fas fa-info-circle"></i> Vous pouvez personnaliser cette section dans votre profil pour y ajouter les numéros de votre établissement.</p>
+                        <a href="{{ url_for('profile') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog"></i> Personnaliser
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/emergency.js') }}"></script>
+{% endblock %}
