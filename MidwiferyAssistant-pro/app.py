@@ -3,14 +3,13 @@ import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.declarative import declarative_base  # Updated import
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Set up database
-class Base(DeclarativeBase):
-    pass
+Base = declarative_base()  # Updated to use declarative_base
 
 db = SQLAlchemy(model_class=Base)
 
