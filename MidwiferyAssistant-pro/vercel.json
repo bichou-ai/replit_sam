@@ -8,6 +8,10 @@
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "MidwiferyAssistant-pro/app.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "MidwiferyAssistant-pro/app.py"
     }
