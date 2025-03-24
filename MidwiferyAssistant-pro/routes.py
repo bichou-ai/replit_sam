@@ -53,7 +53,14 @@ def register():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
 
-        # Validate form (add your validation logic here if needed)
+        # Validate form
+        if not username or not email or not password:
+            flash('Tous les champs sont obligatoires.', 'danger')
+            return redirect(url_for('register'))
+
+        if password != confirm_password:
+            flash('Les mots de passe ne correspondent pas.', 'danger')
+            return redirect(url_for('register'))
 
         # Check if user already exists
         user_exists = User.query.filter((User.username == username) | (User.email == email)).first()
@@ -106,7 +113,7 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # ... (Your dashboard route code - keep it as it is) ...
+    # Get count of patients
     patient_count = Patient.query.filter_by(user_id=current_user.id).count()
 
     # Get recent blood pressure records
@@ -128,7 +135,6 @@ def calculator():
 @app.route('/api/calculate_gestational_age', methods=['POST'])
 @login_required
 def api_calculate_gestational_age():
-    # ... (Your api_calculate_gestational_age route code - keep it as it is) ...
     data = request.json
     last_period = datetime.strptime(data['lastPeriod'], '%Y-%m-%d')
     cycle_length = int(data['cycleLength'])
@@ -158,7 +164,6 @@ def biomedical():
 @app.route('/api/analyze_blood_results', methods=['POST'])
 @login_required
 def api_analyze_blood_results():
-    # ... (Your api_analyze_blood_results route code - keep it as it is) ...
     data = request.json
     hemoglobin = float(data.get('hemoglobin', 0))
     platelets = int(data.get('platelets', 0))
@@ -170,7 +175,7 @@ def api_analyze_blood_results():
 
     results = analyze_blood_results(hemoglobin, platelets, ferritin, hematocrit, ldh, alt, ast)
 
-    # If patient ID is provided, save the record (keep this part)
+    # If patient ID is provided, save the record
     if 'patientId' in data and data['patientId']:
         patient_id = int(data['patientId'])
 
@@ -189,7 +194,7 @@ def api_analyze_blood_results():
         db.session.add(record)
         db.session.commit()
 
-        # Log the action (keep this part)
+        # Log the action
         log = AuditLog(
             user_id=current_user.id,
             action="Enregistrement d'analyse biomédicale",
@@ -205,7 +210,6 @@ def api_analyze_blood_results():
 @app.route('/blood_pressure')
 @login_required
 def blood_pressure():
-    # ... (Your blood_pressure route code - keep it as it is) ...
     patients = Patient.query.filter_by(user_id=current_user.id).all()
     return render_template('blood_pressure.html', patients=patients)
 
@@ -213,7 +217,6 @@ def blood_pressure():
 @app.route('/api/record_blood_pressure', methods=['POST'])
 @login_required
 def api_record_blood_pressure():
-    # ... (Your api_record_blood_pressure route code - keep it as it is) ...
     data = request.json
     systolic = int(data['systolic'])
     diastolic = int(data['diastolic'])
@@ -223,7 +226,7 @@ def api_record_blood_pressure():
 
     result = evaluate_blood_pressure(systolic, diastolic)
 
-    # Record the blood pressure measurement if a patient is selected (keep this part)
+    # Record the blood pressure measurement if a patient is selected
     if patient_id:
         record = BloodPressureRecord(
             systolic=systolic,
@@ -237,7 +240,7 @@ def api_record_blood_pressure():
         db.session.add(record)
         db.session.commit()
 
-        # Log the action (keep this part)
+        # Log the action
         log = AuditLog(
             user_id=current_user.id,
             action="Enregistrement de tension artérielle",
@@ -267,10 +270,40 @@ def emergency():
 @app.route('/patients', methods=['GET', 'POST'])
 @login_required
 def patients():
-    # ... (Your patients route code - keep it as it is) ...
     if request.method == 'POST':
-        # ... (Your patient creation logic - keep it as it is) ...
-        pass # Replace with your actual POST logic
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        date_of_birth = datetime.strptime(request.form.get('date_of_birth'), '%Y-%m-%d') if request.form.get('date_of_birth') else None
+        last_period_date = datetime.strptime(request.form.get('last_period_date'), '%Y-%m-%d') if request.form.get('last_period_date') else None
+        cycle_length = int(request.form.get('cycle_length', 28))
+        notes = request.form.get('notes', '')
+
+        new_patient = Patient(
+            first_name=first_name,
+            last_name=last_name,
+            date_of_birth=date_of_birth,
+            last_period_date=last_period_date,
+            cycle_length=cycle_length,
+            notes=notes,
+            user_id=current_user.id
+        )
+
+        db.session.add(new_patient)
+        db.session.commit()
+
+        # Log the action
+        log = AuditLog(
+            user_id=current_user.id,
+            action="Création de patient",
+            details=f"Patient: {first_name} {last_name}",
+            ip_address=request.remote_addr
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        flash('Patient ajouté avec succès.', 'success')
+        return redirect(url_for('patients'))
+
     patients_list = Patient.query.filter_by(user_id=current_user.id).all()
     return render_template('patients.html', patients=patients_list)
 
@@ -278,11 +311,47 @@ def patients():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    # ... (Your profile route code - keep it as it is) ...
     if request.method == 'POST':
-        # ... (Your profile update/password change logic - keep it as it is) ...
-        pass # Replace with your actual POST logic
+        # Update profile
+        if 'update_profile' in request.form:
+            current_user.username = request.form.get('username')
+            current_user.email = request.form.get('email')
+            current_user.default_cycle_length = int(request.form.get('default_cycle_length', 28))
+
+            db.session.commit()
+
+            flash('Profil mis à jour avec succès.', 'success')
+
+        # Change password
+        elif 'change_password' in request.form:
+            current_password = request.form.get('current_password')
+            new_password = request.form.get('new_password')
+            confirm_password = request.form.get('confirm_password')
+
+            if not current_user.check_password(current_password):
+                flash('Mot de passe actuel incorrect.', 'danger')
+            elif new_password != confirm_password:
+                flash('Les nouveaux mots de passe ne correspondent pas.', 'danger')
+            else:
+                current_user.set_password(new_password)
+                db.session.commit()
+
+                # Log the action
+                log = AuditLog(
+                    user_id=current_user.id,
+                    action="Changement de mot de passe",
+                    ip_address=request.remote_addr
+                )
+                db.session.add(log)
+                db.session.commit()
+
+                flash('Mot de passe modifié avec succès.', 'success')
+
+        return redirect(url_for('profile'))
+
+    # Fetch the audit logs for the user
     audit_logs = AuditLog.query.filter_by(user_id=current_user.id).order_by(AuditLog.timestamp.desc()).limit(10).all()
+
     return render_template('profile.html', user=current_user, audit_logs=audit_logs)
 
 
@@ -296,7 +365,7 @@ def internal_server_error(e):
     return render_template('error.html', error='Erreur serveur', message='Une erreur est survenue sur le serveur.', code=500), 500
 
 
-# Module de Suivi Postnatal (Keep your postnatal module routes as they are)
+# Module de Suivi Postnatal
 @app.route('/postnatal')
 @login_required
 def postnatal():
@@ -305,13 +374,232 @@ def postnatal():
 @app.route('/api/postnatal/babies')
 @login_required
 def api_babies():
-    # ... (Your api_babies route code - keep it as it is) ...
-    pass # Replace with your actual API logic
+    babies = BabyRecord.query.join(Patient).filter(Patient.user_id == current_user.id).all()
+
+    babies_data = []
+    for baby in babies:
+        babies_data.append({
+            'id': baby.id,
+            'first_name': baby.first_name,
+            'last_name': baby.last_name,
+            'birth_date': baby.birth_date.strftime('%Y-%m-%d'),
+            'mother_id': baby.mother_id,
+            'mother_name': f"{baby.mother.last_name} {baby.mother.first_name}"
+        })
+
+    return jsonify({'babies': babies_data})
+
 
 @app.route('/api/postnatal/deliveries')
 @login_required
 def api_deliveries():
-     # ... (Your api_deliveries route code - keep it as it is) ...
-    pass # Replace with your actual API logic
+    deliveries = DeliveryRecord.query.join(Patient).filter(Patient.user_id == current_user.id).order_by(DeliveryRecord.delivery_date.desc()).all()
 
-# ... (Keep all your other postnatal API routes as they are) ...
+    deliveries_data = []
+    for delivery in deliveries:
+        deliveries_data.append({
+            'id': delivery.id,
+            'delivery_date': delivery.delivery_date.isoformat(),
+            'delivery_type': delivery.delivery_type,
+            'delivery_location': delivery.delivery_location,
+            'complications': delivery.complications,
+            'patient_id': delivery.patient_id,
+            'patient_name': f"{delivery.patient.last_name} {delivery.patient.first_name}"
+        })
+
+    return jsonify({'deliveries': deliveries_data})
+
+@app.route('/api/postnatal/checkup', methods=['POST'])
+@login_required
+def api_record_checkup():
+    data = request.json
+    checkup_type = data.get('checkup_type')
+
+    # Créer le checkup de base
+    checkup = PostnatalCheckup(
+        checkup_date=datetime.strptime(data.get('checkup_date'), '%Y-%m-%dT%H:%M'),
+        checkup_type=checkup_type,
+        temperature=float(data.get('temperature')) if data.get('temperature') else None,
+        heart_rate=int(data.get('heart_rate')) if data.get('heart_rate') else None,
+        blood_pressure_systolic=int(data.get('blood_pressure_systolic')) if data.get('blood_pressure_systolic') else None,
+        blood_pressure_diastolic=int(data.get('blood_pressure_diastolic')) if data.get('blood_pressure_diastolic') else None,
+        respiratory_rate=int(data.get('respiratory_rate')) if data.get('respiratory_rate') else None,
+        weight=float(data.get('weight')) if data.get('weight') else None,
+        symptoms=data.get('symptoms'),
+        physical_exam=data.get('physical_exam'),
+        recommendations=data.get('recommendations'),
+        medications=data.get('medications'),
+        notes=data.get('notes'),
+        user_id=current_user.id
+    )
+
+    # Ajouter la date du prochain checkup si fournie
+    if data.get('next_checkup_date'):
+        checkup.next_checkup_date = datetime.strptime(data.get('next_checkup_date'), '%Y-%m-%d')
+
+    # Initialiser patient_id et baby_id à None
+    patient_id = None
+    baby_id = None
+
+    # Associer au patient ou au bébé selon le type
+    if checkup_type == 'mother':
+        patient_id = int(data.get('patient_id'))
+        # Vérifier que le patient appartient au midwife connecté
+        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+        if not patient:
+            return jsonify({'error': 'Patient non trouvé'}), 404
+
+        checkup.patient_id = patient_id
+
+    elif checkup_type == 'baby':
+        baby_id = int(data.get('baby_id'))
+        # Vérifier que le bébé appartient à un patient du midwife connecté
+        baby = BabyRecord.query.join(Patient).filter(
+            BabyRecord.id == baby_id,
+            Patient.user_id == current_user.id
+        ).first()
+
+        if not baby:
+            return jsonify({'error': 'Bébé non trouvé'}), 404
+
+        checkup.baby_id = baby_id
+
+    db.session.add(checkup)
+
+    # Journal d'audit
+    log_details = ""
+    if checkup_type == 'mother':
+        log_details = f"Patient ID: {patient_id}"
+    else:
+        log_details = f"Bébé ID: {baby_id}"
+
+    log = AuditLog(
+        user_id=current_user.id,
+        action=f"Enregistrement de suivi postnatal ({checkup_type})",
+        details=log_details,
+        ip_address=request.remote_addr
+    )
+    db.session.add(log)
+
+    db.session.commit()
+
+    # Créer un rappel automatique pour le prochain checkup si la date est fournie
+    if checkup.next_checkup_date:
+        reminder = PostnatalCareReminder(
+            title=f"Prochain suivi postnatal ({checkup_type})",
+            description=f"Suivi postnatal programmé pour {'la mère' if checkup_type == 'mother' else 'le bébé'}",
+            reminder_date=checkup.next_checkup_date,
+            reminder_type=checkup_type,
+            priority="normal",
+            user_id=current_user.id
+        )
+
+        if checkup_type == 'mother':
+            reminder.patient_id = patient_id
+        else:
+            reminder.baby_id = baby_id
+
+        db.session.add(reminder)
+        db.session.commit()
+
+    return jsonify({'success': True, 'checkup_id': checkup.id})
+
+
+@app.route('/api/postnatal/vaccination', methods=['POST'])
+@login_required
+def api_record_vaccination():
+    data = request.json
+
+    # Vérifier que le bébé appartient à un patient du midwife
+    baby_id = int(data.get('baby_id'))
+    baby = BabyRecord.query.join(Patient).filter(
+        BabyRecord.id == baby_id,
+        Patient.user_id == current_user.id
+    ).first()
+
+    if not baby:
+        return jsonify({'error': 'Bébé non trouvé'}), 404
+
+    # Analyser la date d'expiration si fournie
+    expiration_date = None
+    if data.get('expiration_date'):
+        expiration_date = datetime.strptime(data.get('expiration_date'), '%Y-%m-%d').date()
+
+    # Créer l'enregistrement de vaccination
+    vaccination = VaccinationRecord(
+        vaccine_name=data.get('vaccine_name'),
+        date_administered=datetime.strptime(data.get('date_administered'), '%Y-%m-%dT%H:%M'),
+        dose=data.get('dose'),
+        route=data.get('route'),
+        site=data.get('site'),
+        lot_number=data.get('lot_number'),
+        expiration_date=expiration_date,
+        reaction=data.get('reaction'),
+        notes=data.get('notes'),
+        baby_id=baby_id,
+        user_id=current_user.id
+    )
+
+    db.session.add(vaccination)
+
+    # Journal d'audit
+    log = AuditLog(
+        user_id=current_user.id,
+        action="Enregistrement de vaccination",
+        details=f"Bébé ID: {baby_id}, Vaccin: {data.get('vaccine_name')}",
+        ip_address=request.remote_addr
+    )
+    db.session.add(log)
+
+    db.session.commit()
+
+    return jsonify({'success': True, 'vaccination_id': vaccination.id})
+
+@app.route('/api/postnatal/breastfeeding', methods=['POST'])
+@login_required
+def api_record_breastfeeding():
+    data = request.json
+
+    # Vérifier que le bébé appartient à un patient du midwife
+    baby_id = int(data.get('baby_id'))
+    baby = BabyRecord.query.join(Patient).filter(
+        BabyRecord.id == baby_id,
+        Patient.user_id == current_user.id
+    ).first()
+
+    if not baby:
+        return jsonify({'error': 'Bébé non trouvé'}), 404
+
+    # Vérifier que la mère est bien la patiente du midwife
+    mother_id = int(data.get('mother_id'))
+    mother = Patient.query.filter_by(id=mother_id, user_id=current_user.id).first()
+
+    if not mother:
+        return jsonify({'error': 'Mère non trouvée'}), 404
+
+    # Créer l'enregistrement d'allaitement
+    breastfeeding = BreastfeedingRecord(
+        feeding_date=datetime.strptime(data.get('feeding_date'), '%Y-%m-%dT%H:%M'),
+        feeding_type=data.get('feeding_type'),
+        duration=int(data.get('duration')) if data.get('duration') else None,
+        issues=data.get('issues'),
+        notes=data.get('notes'),
+        mother_id=mother_id,
+        baby_id=baby_id,
+        user_id=current_user.id
+    )
+
+    db.session.add(breastfeeding)
+
+    # Journal d'audit
+    log = AuditLog(
+        user_id=current_user.id,
+        action="Enregistrement d'allaitement",
+        details=f"Bébé ID: {baby_id}, Type: {data.get('feeding_type')}",
+        ip_address=request.remote_addr
+    )
+    db.session.add(log)
+
+    db.session.commit()
+
+    return jsonify({'success': True, 'breastfeeding_id': breastfeeding.id})
