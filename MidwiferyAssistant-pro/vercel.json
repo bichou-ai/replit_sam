@@ -2,18 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "MidwiferyAssistant-pro/app.py",
+      "src": "app_test.py",  # Changed to app_test.py
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "MidwiferyAssistant-pro/app.py"
-    },
-    {
       "src": "/(.*)",
-      "dest": "MidwiferyAssistant-pro/app.py"
+      "dest": "app_test.py" # Changed to app_test.py
     }
   ]
 }
