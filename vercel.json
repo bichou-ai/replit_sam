@@ -7,7 +7,7 @@
     }
   ],
   "routes": [
-    {  <-- **Corrected: No semicolon here!**
+    {
       "src": "/(.*)",
       "dest": "app_test.py"
     }
